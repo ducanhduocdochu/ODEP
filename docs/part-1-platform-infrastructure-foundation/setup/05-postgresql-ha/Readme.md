@@ -7,6 +7,8 @@ This document describes how to deploy a **high availability PostgreSQL cluster**
 * **Etcd** (DCS)
 * **HAProxy** (routing write/read traffic)
 
+<img width="1743" height="1145" alt="image" src="https://github.com/user-attachments/assets/e7c41460-7015-47a5-bfbe-e0f7ff0c4ca3" />
+
 ---
 
 ## 0) Topology (Example)
