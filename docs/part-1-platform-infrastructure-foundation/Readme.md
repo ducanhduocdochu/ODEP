@@ -21,12 +21,6 @@ This part answers the question:
 * Data layer (PostgreSQL HA)
 * Access and management tooling
 
-**Out of scope:**
-
-* Business logic
-* Application-level microservice design
-* CI/CD pipelines
-
 ---
 
 ## 🧭 High-Level Architecture
@@ -37,8 +31,6 @@ This part is supported by multiple architecture diagrams, including:
 * Traffic flow & network boundary
 * Platform services & data layer separation
 * Reliability & observability overlay
-
-Diagrams are available in the main [`diagrams/`](../../diagrams) directory.
 
 ---
 
