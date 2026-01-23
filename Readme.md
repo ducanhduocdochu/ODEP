@@ -45,6 +45,10 @@ Each part can be read independently, but together they describe a cohesive **pla
 **Focus:**
 How the platform is deployed, isolated, and operated at the infrastructure level.
 
+<img width="1431" height="1094" alt="Part1-a" src="https://github.com/user-attachments/assets/79b6a243-ff62-4aa9-b056-b867b937e3f3" />
+<img width="1567" height="1001" alt="Part1-b" src="https://github.com/user-attachments/assets/f696ada9-6e5a-404e-b528-a0b4f3edf221" />
+<img width="1342" height="1072" alt="Part1-c" src="https://github.com/user-attachments/assets/f12c8a20-a3ad-4c3a-87ab-a37b9e02725e" />
+
 **Key topics:**
 
 * On-premises Kubernetes runtime
