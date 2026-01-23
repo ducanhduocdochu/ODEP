@@ -20,29 +20,29 @@ This guide installs **Rancher Server** on Ubuntu using **Docker + Docker Compose
 sudo apt update -y
 sudo apt install docker.io docker-compose -y
 docker -v && docker-compose -v
+```
 Enable docker service:
 
-bash
-Sao chép mã
+```bash
 sudo systemctl enable docker
 sudo systemctl start docker
 sudo systemctl status docker --no-pager -l
+```
 (Optional) Allow your current user to run docker without sudo:
 
-bash
-Sao chép mã
+```bash
 sudo usermod -aG docker $USER
 newgrp docker
+```
 3) Create docker-compose.yml
 Create file:
 
-bash
-Sao chép mã
+```bash
 vi docker-compose.yml
+```
 Paste this content:
 
-yaml
-Sao chép mã
+```yaml
 version: '3'
 services:
   rancher-server:
@@ -59,6 +59,7 @@ services:
     environment:
       - CATTLE_AGENT_TLS_MODE=system-store
     privileged: true
+```
 Notes:
 
 ./data/ is used for persistent storage.
@@ -70,19 +71,19 @@ CATTLE_AGENT_TLS_MODE=system-store tells agents to use system cert store.
 4) Start Rancher Server
 Run:
 
-bash
-Sao chép mã
+```bash
 docker-compose up -d
+```
 Check containers:
 
-bash
-Sao chép mã
+```bash
 docker ps
+```
 View logs:
 
-bash
-Sao chép mã
+```bash
 docker logs -f rancher-server
+```
 5) Access Rancher UI
 Open in browser:
 
@@ -98,46 +99,46 @@ Browser may show SSL warning at first (self-signed cert) — this is normal.
 6) Common Management Commands
 Stop:
 
-bash
-Sao chép mã
+```bash
 docker-compose down
+```
 Restart:
 
-bash
-Sao chép mã
+```bash
 docker-compose restart
+```
 Upgrade Rancher image version:
 
-bash
-Sao chép mã
+```bash
 docker-compose pull
 docker-compose up -d
+```
 Remove everything (DANGER: deletes data):
 
-bash
-Sao chép mã
+```bash
 docker-compose down -v
 rm -rf ./data
+```
 7) Troubleshooting
 7.1 Check port usage
-bash
-Sao chép mã
+```bash
 sudo ss -lntp | egrep '(:80|:443)'
+```
 7.2 Check Rancher health
-bash
-Sao chép mã
+```bash
 curl -k https://localhost/ping
+```
 Expected output:
 
-text
-Sao chép mã
+```text
 pong
+```
 7.3 Rancher container not starting
 Check logs:
 
-bash
-Sao chép mã
+```bash
 docker logs rancher-server --tail 200
+```
 DONE ✅
 
 Rancher Server installed via Docker Compose
