@@ -1,4 +1,7 @@
 # Part 1 – Platform & Infrastructure Foundation
+<img width="1431" height="1094" alt="Part1-a" src="https://github.com/user-attachments/assets/48bb938e-14b4-41b5-ac4f-f03bfbe54bc7" />
+<img width="1567" height="1001" alt="Part1-b" src="https://github.com/user-attachments/assets/40018f2b-fd57-4143-ac1b-b8a32ec0d8f2" />
+<img width="1342" height="1072" alt="Part1-c" src="https://github.com/user-attachments/assets/25f48186-c0db-477e-a169-52271f530b1b" />
 
 This part documents the **platform and infrastructure foundation** of the on-premises DevOps platform.
 
