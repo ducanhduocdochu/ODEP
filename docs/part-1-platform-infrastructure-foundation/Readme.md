@@ -189,21 +189,6 @@ Provide centralized log storage and visualization.
 
 ---
 
-### 🔟 Set Up Cloudflare (Optional)
-
-**Goal:**
-Add an external DNS and security layer.
-
-**Includes:**
-
-* DNS configuration
-* Proxying and basic security features
-
-📁 Folder:
-[`setup/10-cloudflare`](./setup/10-cloudflare)
-
----
-
 ## 🧠 Design Notes
 
 * Kubernetes is treated as a **runtime**, not a data store.
