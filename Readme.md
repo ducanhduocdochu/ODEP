@@ -72,6 +72,12 @@ How the platform is deployed, isolated, and operated at the infrastructure level
 **Folder:**
 [`docs/part-2-core-microservices-architecture`](docs/part-2-core-microservices-architecture)
 
+
+<img width="1482" height="1072" alt="Part2-a" src="https://github.com/user-attachments/assets/6d5353ab-56ae-4512-8e26-194cbe47b31f" />
+<img width="1246" height="794" alt="Part2-b" src="https://github.com/user-attachments/assets/15958e29-5624-4ca1-9588-94acfb223127" />
+<img width="1234" height="802" alt="Part2-c" src="https://github.com/user-attachments/assets/785f7273-262e-4d41-839a-478a855ece32" />
+<img width="1244" height="760" alt="Part2-d" src="https://github.com/user-attachments/assets/243f9922-7d89-4177-ae93-49f8be5e49a6" />
+
 **Focus:**
 How the business system is designed to scale, evolve, and remain maintainable.
 
