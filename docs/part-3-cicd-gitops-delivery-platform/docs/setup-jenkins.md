@@ -152,43 +152,6 @@ Now access:
 https://jenkins.ducanh.io.vn
 🔧 Recommended Jenkins Plugins
 
-After installation, install:
-```
-Git Plugin
-
-Docker Pipeline
-
-Pipeline
-
-Credentials Binding
-
-Blue Ocean (optional)
-```
-
-🔐 Security Recommendations
-```
-
-Disable anonymous access
-
-Enable role-based access control
-
-Use credentials store (never hardcode secrets)
-
-Enable CSRF protection
-
-Regularly update plugins
-```
-
-🚀 Next Steps
-```
-Configure Harbor credentials
-
-Create CI pipeline (Jenkinsfile)
-
-Configure GitLab Webhook
-
-Set up Docker agent (optional)
-```
 👤 Author
 
 DucAnh
