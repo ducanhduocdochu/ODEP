@@ -102,6 +102,8 @@ How the business system is designed to scale, evolve, and remain maintainable.
 **Focus:**
 How code is built, packaged, and delivered to the platform in a controlled and repeatable way.
 
+<img width="1755" height="938" alt="image" src="https://github.com/user-attachments/assets/18d15089-cd6f-4eef-8849-38d4bc935938" />
+
 **Key topics:**
 
 * GitLab for source control
@@ -110,6 +112,7 @@ How code is built, packaged, and delivered to the platform in a controlled and r
 * Helm for application packaging
 * Argo CD for GitOps-based deployment
 * Environment promotion strategies
+* Vault for secret management
 
 > Application logic and runtime internals are intentionally abstracted.
 
