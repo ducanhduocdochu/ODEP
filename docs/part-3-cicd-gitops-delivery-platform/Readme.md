@@ -135,7 +135,7 @@ Vault → External Secrets Operator → Kubernetes Secret → Pod
 Template file:
 
 
-gitops/charts/app-chart/templates/externalsecret.yaml
+[gitops/charts/app-chart/templates/externalsecret.yaml](https://github.com/ducanhduocdochu/helm-microservice-template)
 
 
 ---
