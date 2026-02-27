@@ -1,229 +1,181 @@
-🚀 End-to-End CI/CD Pipeline with GitOps on Kubernetes
+# 🚀 End-to-End CI/CD Pipeline with GitOps on Kubernetes
 
-This project is part of my On-Premises DevOps Platform for E-commerce series.
+This project is part of my **On-Premises DevOps Platform for E-commerce** series.
 
 It demonstrates a production-style CI/CD and GitOps workflow running on a High-Availability Kubernetes cluster, fully on-premises.
 
-🏗 Architecture Overview
+---
 
-<img width="1755" height="938" alt="image" src="https://github.com/user-attachments/assets/756fadfe-bff6-4e16-a3e1-2a50426f2697" />
+## 🏗 Architecture Overview
 
+**Flow:**  
 Code → CI → Container → Registry → GitOps → Kubernetes → Production
 
-GitLab – Source code management
+<img width="1755" height="938" alt="image" src="https://github.com/user-attachments/assets/f8ccc44f-5b64-465a-bbb7-cceb7c6b75a0" />
 
-Jenkins – CI automation
+**Tech Stack:**
 
-Harbor – Private container registry
+- GitLab – Source Code Management  
+- Jenkins – CI Automation  
+- Harbor – Private Container Registry  
+- Kubernetes (3-node HA control plane)  
+- Argo CD – GitOps Continuous Delivery  
+- HashiCorp Vault – Secrets Management  
+- External Secrets Operator – Secret Injection  
 
-Argo CD – GitOps continuous delivery
+---
 
-Kubernetes (HA) – Application runtime
+## ⚙️ Setup Guide
 
-HashiCorp Vault – Secrets management via External Secrets Operator
+### 1️⃣ GitLab Setup
+- Create application repository  
+- Create GitOps repository  
+- Configure Webhook to Jenkins  
 
-⚙️ Setup Guide
-1️⃣ GitLab Setup
+See: `docs/setup-gitlab.md`
 
-Create repository for:
+---
 
-Application source code
+### 2️⃣ Jenkins Setup
+- Install Jenkins  
+- Install required plugins (Git, Docker, Pipeline)  
+- Configure Harbor credentials  
+- Create pipeline pointing to:
 
-GitOps repository
-
-Configure Webhook to Jenkins
-
-Enable Container Registry (optional if not using Harbor directly)
-
-Guide:
-👉 /docs/setup-gitlab.md
-
-2️⃣ Jenkins Setup
-
-Install Jenkins on-prem
-
-Install required plugins:
-
-Git
-
-Docker
-
-Pipeline
-
-Configure:
-
-Docker credentials
-
-Harbor credentials
-
-Create Pipeline Job pointing to:
 
 cicd/Jenkinsfile.prod
 
-Guide:
-👉 /docs/setup-jenkins.md
 
-3️⃣ Harbor Setup
+See: `docs/setup-jenkins.md`
 
-Deploy Harbor
+---
 
-Create Project
+### 3️⃣ Harbor Setup
+- Deploy Harbor  
+- Create project  
+- Create robot account  
+- Configure registry credentials in Jenkins  
 
-Create Robot Account
+See: `docs/setup-harbor.md`
 
-Configure image retention policy
+---
 
-Guide:
-👉 /docs/setup-harbor.md
+### 4️⃣ Kubernetes (HA)
+- kubeadm 3-node control plane  
+- Calico CNI  
+- Ingress NGINX  
 
-4️⃣ Kubernetes Cluster (HA)
+See: `docs/setup-kubernetes-ha.md`
 
-3-node control plane (kubeadm)
+---
 
-Calico CNI
+### 5️⃣ Argo CD Setup
 
-Ingress NGINX
-
-Rancher (optional)
-
-Guide:
-👉 /docs/setup-kubernetes-ha.md
-
-5️⃣ Argo CD Setup
-
-Install Argo CD
-
-Configure repository access
-
-Apply Application manifest:
 
 kubectl apply -f gitops/argo-app/application.yaml
 
-Guide:
-👉 /docs/setup-argo.md
 
-6️⃣ HashiCorp Vault Setup
+See: `docs/setup-argo.md`
 
-Deploy Vault
+---
 
-Enable KV secret engine
+### 6️⃣ Vault Setup
 
-Store application secrets
+- Deploy Vault  
+- Enable KV secret engine  
+- Store application secrets  
+- Install External Secrets Operator  
+- Configure SecretStore  
 
-Install External Secrets Operator
+See: `docs/setup-vault.md`
 
-Configure SecretStore / ClusterSecretStore
+---
 
-Guide:
-👉 /docs/setup-vault.md
+## 🔄 CI/CD Flow
 
-🔄 CI/CD Flow
-CI Pipeline (Jenkins)
+### CI (Jenkins)
 
-Detect changed services
-
-Build Docker image
-
-Tag image using commit SHA
-
-Push image to Harbor
-
-Update image tag in GitOps values.yaml
-
-Commit & push to GitOps repository
+1. Detect changed services  
+2. Build Docker image  
+3. Tag image with commit SHA  
+4. Push image to Harbor  
+5. Update image tag in GitOps repo  
+6. Commit & push changes  
 
 Pipeline file:
 
+
 cicd/Jenkinsfile.prod
-GitOps Deployment (Argo CD)
 
-Argo CD detects changes in GitOps repo
 
-Sync Helm chart
+---
 
-Deploy to Kubernetes
+### CD (Argo CD - GitOps)
 
-Self-heal drifted resources
+1. Argo CD detects change in GitOps repo  
+2. Sync Helm chart  
+3. Deploy to Kubernetes  
+4. Self-heal drifted resources  
 
 Application manifest:
 
+
 gitops/argo-app/application.yaml
-🔐 Secret Management Flow
+
+
+---
+
+## 🔐 Secret Management
 
 Vault → External Secrets Operator → Kubernetes Secret → Pod
 
-No secrets stored in Git
-
-Secrets injected dynamically at deployment time
+- No secrets stored in Git  
+- Secrets injected dynamically during deployment  
 
 Template file:
 
+
 gitops/charts/app-chart/templates/externalsecret.yaml
-📦 Helm Chart Template
 
-Location:
 
-gitops/charts/app-chart/
+---
 
-Contains:
-
-Deployment
-
-Service
-
-Ingress
-
-ExternalSecret
-
-values.yaml
-
-🧪 Environments
-
-Staging
-
-Production
-
-Image tags managed automatically by CI.
-
-🚀 How to Deploy
+## 🚀 How to Deploy
 
 Push code:
 
+
 git push origin main
 
+
 CI will:
-
-Build & push image
-
-Update GitOps repo
+- Build and push image  
+- Update GitOps repo  
 
 Argo CD will:
+- Automatically sync and deploy  
 
-Auto-sync and deploy
+---
 
-🛡 Security Considerations
+## 🛡 Security Considerations
 
-Private registry (Harbor)
+- Private container registry  
+- Vault-managed secrets  
+- RBAC enabled  
+- HA control plane  
 
-Vault-managed secrets
+---
 
-No plaintext secrets in Git
+## 📈 Future Improvements
 
-Role-based access control (RBAC)
+- Trivy image scanning  
+- SOPS integration  
+- Monitoring with Prometheus & Grafana  
+- Policy enforcement (OPA / Kyverno)  
 
-HA control plane
+---
 
-📈 Future Improvements
+## 👤 Author
 
-Add Trivy image scanning
-
-Implement SOPS for Git encryption
-
-Add Prometheus & Grafana monitoring
-
-Implement OPA / Kyverno policies
-
-👤 Author
-
-DucAnh
-I am a software engineer on the path to becoming a DevOps engineer.
+Thanh  
+DevOps / Platform Engineering
