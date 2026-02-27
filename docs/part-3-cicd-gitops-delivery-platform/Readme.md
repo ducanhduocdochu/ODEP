@@ -177,5 +177,5 @@ Argo CD will:
 
 ## 👤 Author
 
-Thanh  
-DevOps / Platform Engineering
+DucAnh  
+I am a software engineer on the path to becoming a DevOps engineer.
