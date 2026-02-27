@@ -96,7 +96,7 @@ Settings → Repositories
 
 Add repository
 
-Provide GitOps repo URL
+Provide GitOps repo URL and Harbor
 
 Add credentials if private
 
