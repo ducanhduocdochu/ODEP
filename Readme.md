@@ -147,6 +147,8 @@ How the platform is observed and operated during runtime.
 **Focus:**
 How security is integrated into the platform and delivery process.
 
+
+
 **Key topics:**
 
 * DevSecOps principles and mindset
