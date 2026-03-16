@@ -1,0 +1,552 @@
+pipeline {
+    agent any
+
+    environment {
+        HARBOR_REGISTRY = "harbor.ducanh.io.vn"
+        HARBOR_PROJECT  = "micro-backend-stag"  
+        HARBOR_ROBOT_USER = 'robot$bot-for-cicd'
+        GIT_COMMIT_TAG  = "${env.GIT_COMMIT.take(7)}"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Detect changed services') {
+            steps {
+                script {
+                    def changedFiles = sh(
+                        script: """
+                        git diff --name-only HEAD^ HEAD || true
+                        """,
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Changed files:\n${changedFiles}"
+
+                    def services = []
+                    changedFiles.split('\n').each { file ->
+                        if (file.startsWith("service/")) {
+                            def svc = file.split('/')[1]
+                            services << svc
+                        }
+                    }
+
+                    services = services.unique()
+
+                    if (services.isEmpty()) {
+                        echo "No services changed"
+                        currentBuild.result = 'SUCCESS'
+                        env.CHANGED_SERVICES = ""
+                    } else {
+                        env.CHANGED_SERVICES = services.join(',')
+                        echo "Detected services: ${env.CHANGED_SERVICES}"
+                    }
+                }
+            }
+        }
+
+        stage('DevSecOps Scan') {
+
+            parallel {
+                stage('Secret Scan') {
+                    steps {
+                        script {
+                            sh '''
+                            echo "=== Secret Scan (Gitleaks) ==="
+
+                            docker run --rm \
+                            -v "${WORKSPACE}:/repo" \
+                            ghcr.io/gitleaks/gitleaks:latest \
+                            detect \
+                            --source /repo \
+                            --report-format csv \
+                            --report-path /repo/gitleaks-report.csv \
+                            --redact || true
+
+                            echo "=== Secret scan finished ==="
+                            '''
+                        }
+                    }
+                }
+
+                stage('Dependency Scan') {
+                    steps {
+                        sh '''
+                        echo "=== Trivy Dependency Scan ==="
+
+                        docker run --rm \
+                        -v "${WORKSPACE}:/project" \
+                        -v "${WORKSPACE}:/report" \
+                        aquasec/trivy:latest \
+                        fs /project \
+                        --format template \
+                        --template "@contrib/html.tpl" \
+                        -o /report/trivy-dependency-report.html \
+                        --severity HIGH,CRITICAL \
+                        --exit-code 0
+                        '''
+                    }
+                }
+
+                stage('SonarQube Scan') {
+                    when {
+                        expression { env.CHANGED_SERVICES?.trim() }
+                    }
+
+                    steps {
+                        script {
+
+                            def scannerHome = tool 'sonar-scanner'
+                            def serviceList = env.CHANGED_SERVICES.split(',')
+
+                            serviceList.each { service ->
+
+                                def serviceDir = "service/${service}"
+
+                                withCredentials([
+                                    string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')
+                                ]) {
+
+                                    sh """
+                                    echo "=== SonarQube Scan: ${service} ==="
+
+                                    ${scannerHome}/bin/sonar-scanner \
+                                    -Dsonar.projectKey=${service} \
+                                    -Dsonar.projectName=${service} \
+                                    -Dsonar.sources=${serviceDir} \
+                                    -Dsonar.host.url=https://sonar.ducanh.io.vn \
+                                    -Dsonar.login=\$SONAR_TOKEN
+                                    """
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Build Image') {
+            when {
+                expression { env.CHANGED_SERVICES?.trim() }
+            }
+
+            steps {
+                script {
+                    def serviceList = env.CHANGED_SERVICES.split(',')
+                    def builds = [:]
+
+                    serviceList.each { service ->
+                        builds[service] = {
+                            buildImage(service)
+                        }
+                    }
+
+                    parallel builds
+                }
+            }
+        }
+
+        stage('Scan Image') {
+            when {
+                expression { env.CHANGED_SERVICES?.trim() }
+            }
+
+            steps {
+                script {
+                    def serviceList = env.CHANGED_SERVICES.split(',')
+                    def scans = [:]
+
+                    serviceList.each { service ->
+                        scans[service] = {
+                            scanImage(service)
+                        }
+                    }
+
+                    parallel scans
+                }
+            }
+        }
+
+        stage('Push Image') {
+            when {
+                expression { env.CHANGED_SERVICES?.trim() }
+            }
+
+            steps {
+                script {
+                    def serviceList = env.CHANGED_SERVICES.split(',')
+                    def pushes = [:]
+
+                    serviceList.each { service ->
+                        pushes[service] = {
+                            pushImage(service)
+                        }
+                    }
+
+                    parallel pushes
+                }
+            }
+        }
+
+        stage('Update GitOps') {
+            when {
+                expression { env.CHANGED_SERVICES?.trim() }
+            }
+
+            steps {
+                script {
+                    def serviceList = env.CHANGED_SERVICES.split(',')
+
+                    serviceList.each { service ->
+                        updateGitOps(service)
+                    }
+                }
+            }
+        }
+    }
+    post {
+    always {
+
+        script {
+
+            writeFile file: 'generate_dashboard.py', text: '''
+import os
+
+reports = [f for f in os.listdir('.') if f.startswith("trivy-image-report-")]
+
+rows = ""
+
+for r in reports:
+    service = r.replace("trivy-image-report-","").replace(".html","")
+
+    rows += f"""
+<tr>
+<td style="padding:10px;border-bottom:1px solid #334155">{service}</td>
+<td style="padding:10px;border-bottom:1px solid #334155">
+<a href="{r}" style="color:#22c55e;font-weight:bold">View Report</a>
+</td>
+<td style="padding:10px;border-bottom:1px solid #334155;color:#22c55e">
+Available
+</td>
+</tr>
+"""
+
+html = f"""
+<html>
+
+<body style="background:#0f172a;font-family:Arial;color:white;padding:40px">
+
+<h1 style="text-align:center">DevSecOps Security Dashboard</h1>
+
+<table width="100%" cellpadding="0" cellspacing="0">
+
+<tr>
+<td>
+
+<table width="100%" style="background:#1e293b;border-radius:10px;padding:20px;margin-bottom:20px">
+<tr><td>
+<h2>Secret Scan</h2>
+<a href="gitleaks-report.csv" style="color:#22c55e;font-weight:bold">
+Download Report
+</a>
+</td></tr>
+</table>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<table width="100%" style="background:#1e293b;border-radius:10px;padding:20px;margin-bottom:20px">
+<tr><td>
+<h2>Dependency Scan</h2>
+<a href="trivy-dependency-report.html" style="color:#22c55e;font-weight:bold">
+View Report
+</a>
+</td></tr>
+</table>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<table width="100%" style="background:#1e293b;border-radius:10px;padding:20px">
+
+<tr>
+<td colspan="3">
+<h2>Container Image Scan</h2>
+</td>
+</tr>
+
+<tr style="background:#334155">
+<th style="padding:10px;text-align:left">Service</th>
+<th style="padding:10px;text-align:left">Report</th>
+<th style="padding:10px;text-align:left">Status</th>
+</tr>
+
+{rows}
+
+</table>
+
+</td>
+</tr>
+
+</table>
+
+</body>
+</html>
+"""
+
+with open("security-dashboard.html","w") as f:
+    f.write(html)
+
+print("Dashboard generated")
+'''
+
+            sh 'python3 generate_dashboard.py'
+        }
+
+        publishHTML([
+            reportDir: '.',
+            reportFiles: 'security-dashboard.html',
+            reportName: 'Security Dashboard',
+            keepAll: true,
+            alwaysLinkToLastBuild: true,
+            allowMissing: true
+        ])
+
+        archiveArtifacts artifacts: 'gitleaks-report.csv,trivy-dependency-report.html,trivy-image-report-*.html', fingerprint: true
+    }
+}
+}
+
+/* ===== Function ===== */
+def updateGitOps(String service) {
+
+    def imageName = ""
+
+    switch (service) {
+        case "auth":
+            imageName = "auth-api"
+            break
+        case "order":
+            imageName = "order-api"
+            break
+        case "product":
+            imageName = "product-api"
+            break
+        case "user":
+            imageName = "user-api"
+            break
+        case "discount":
+            imageName = "discount-api"
+            break
+        case "payment":
+            imageName = "payment-api"
+            break
+        case "order":
+            imageName = "order-api"
+            break
+        default:
+            error "Unknown service: ${service}"
+    }
+
+    withCredentials([
+        string(credentialsId: 'gitlab-credential', variable: 'GIT_TOKEN')
+    ]) {
+
+        withEnv(["SERVICE=${service}", "TAG=${GIT_COMMIT_TAG}"]) {
+
+            sh '''
+            echo "=== Clone GitOps repo ==="
+
+            rm -rf gitops
+
+            git clone -b master https://oauth2:$GIT_TOKEN@gitlab.ducanh.io.vn/e-commerce-dotnet/gitops.git gitops
+
+            cd gitops/apps/envs/stag/backend/$SERVICE
+
+            echo "=== Update image tag ==="
+
+            sed -i "s/tag:.*/tag: \\"$TAG\\"/" values.yaml
+
+            git config user.email "jenkins@ci.local"
+            git config user.name "jenkins"
+
+            git add values.yaml
+            git commit -m "Update $SERVICE image to $TAG" || true
+
+            git push origin master
+            '''
+        }
+    }
+}
+
+def buildImage(String service) {
+
+    def dockerfileDir = ""
+    def imageName = ""
+
+    switch (service) {
+        case "auth":
+            dockerfileDir = "service/auth/Auth.Api"
+            imageName = "auth-api"
+            break
+        case "order":
+            dockerfileDir = "service/order/Order.Api"
+            imageName = "order-api"
+            break
+        case "product":
+            dockerfileDir = "service/product/Product.Api"
+            imageName = "product-api"
+            break
+        case "gateway":
+            dockerfileDir = "service/gateway/Gateway.Api"
+            imageName = "gateway"
+            break
+        case "discount":
+            dockerfileDir = "service/discount/Discount.Api"
+            imageName = "discount-api"
+            break
+        case "inventory":
+            dockerfileDir = "service/inventory/Inventory.Api"
+            imageName = "inventory-api"
+            break
+        case "notification":
+            dockerfileDir = "service/notification/Notification.Api"
+            imageName = "notification-api"
+            break
+        case "user":
+            dockerfileDir = "service/user/User.Api"
+            imageName = "user-api"
+            break
+        case "payment":
+            dockerfileDir = "service/payment/Payment.Api"
+            imageName = "payment-api"
+            break
+        default:
+            error "Unknown service: ${service}"
+    }
+
+    sh """
+    IMAGE=${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${imageName}
+
+    echo "=== Build \$IMAGE ==="
+
+    docker build -f ${dockerfileDir}/Dockerfile \
+    -t \$IMAGE:${GIT_COMMIT_TAG} \
+    -t \$IMAGE:latest .
+    """
+}
+
+def scanImage(String service) {
+
+    def imageName = ""
+
+    switch (service) {
+        case "auth":
+            imageName = "auth-api"
+            break
+        case "order":
+            imageName = "order-api"
+            break
+        case "product":
+            imageName = "product-api"
+            break
+        case "gateway":
+            imageName = "gateway"
+            break
+        case "discount":
+            imageName = "discount-api"
+            break
+        case "inventory":
+            imageName = "inventory-api"
+            break
+        case "notification":
+            imageName = "notification-api"
+            break
+        case "user":
+            imageName = "user-api"
+            break
+        case "payment":
+            imageName = "payment-api"
+            break
+        default:
+            error "Unknown service: ${service}"
+    }
+
+    sh """
+    IMAGE=${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${imageName}
+
+    echo "=== Trivy Image Scan \$IMAGE ==="
+
+    docker run --rm \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v "${WORKSPACE}:/report" \
+    aquasec/trivy:latest \
+    image \$IMAGE:${GIT_COMMIT_TAG} \
+    --format template \
+    --template "@contrib/html.tpl" \
+    -o /report/trivy-image-report-${service}.html \
+    --severity HIGH,CRITICAL \
+    --exit-code 0
+    """
+}
+def pushImage(String service) {
+
+    def imageName = ""
+
+    switch (service) {
+        case "auth":
+            imageName = "auth-api"
+            break
+        case "order":
+            imageName = "order-api"
+            break
+        case "product":
+            imageName = "product-api"
+            break
+        case "gateway":
+            imageName = "gateway"
+            break
+        case "discount":
+            imageName = "discount-api"
+            break
+        case "inventory":
+            imageName = "inventory-api"
+            break
+        case "notification":
+            imageName = "notification-api"
+            break
+        case "user":
+            imageName = "user-api"
+            break
+        case "payment":
+            imageName = "payment-api"
+            break
+        default:
+            error "Unknown service: ${service}"
+    }
+
+    withCredentials([
+        string(credentialsId: 'harbor-token', variable: 'HARBOR_TOKEN')
+    ]) {
+
+        sh """
+        IMAGE=${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${imageName}
+
+        echo "\$HARBOR_TOKEN" | docker login ${HARBOR_REGISTRY} --username "\${HARBOR_ROBOT_USER}" --password-stdin
+
+        docker push \$IMAGE:${GIT_COMMIT_TAG}
+        docker push \$IMAGE:latest
+        """
+    }
+}
