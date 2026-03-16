@@ -147,7 +147,7 @@ How the platform is observed and operated during runtime.
 **Focus:**
 How security is integrated into the platform and delivery process.
 
-
+<img width="1867" height="813" alt="image" src="https://github.com/user-attachments/assets/77938e2b-a18b-4970-9ac3-c18e30249826" />
 
 **Key topics:**
 
