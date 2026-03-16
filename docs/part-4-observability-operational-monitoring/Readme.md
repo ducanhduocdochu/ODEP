@@ -15,23 +15,7 @@ The stack will allow you to monitor **cluster metrics, application metrics, and 
 
 # Architecture Overview
 
-               +-------------------+
-               |      Grafana      |
-               | Dashboards & Logs |
-               +---------+---------+
-                         |
-        +----------------+----------------+
-        |                                 |
- +------+-------+                 +-------+------+
- |  Prometheus  |                 |     Loki     |
- | Metrics DB   |                 |   Log Store  |
- +------+-------+                 +-------+------+
-        |                                 |
-  ServiceMonitor                     Promtail
-        |                                 |
- Kubernetes Services               Kubernetes Nodes
-        |                                 |
-     Application Pods                Container Logs
+<img width="919" height="604" alt="image" src="https://github.com/user-attachments/assets/d44c95cb-23d4-4636-8575-3bb3f5db220c" />
 
 ---
 
