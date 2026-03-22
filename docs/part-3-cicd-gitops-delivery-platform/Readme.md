@@ -153,7 +153,8 @@ CI will:
 - Update GitOps repo  
 
 Argo CD will:
-- Automatically sync and deploy  
+- Automatically sync and deploy
+- Source value helmchart: https://github.com/ducanhduocdochu/value-helm-microservice-gitops
 
 ---
 
