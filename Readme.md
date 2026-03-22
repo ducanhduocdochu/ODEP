@@ -128,6 +128,8 @@ How code is built, packaged, and delivered to the platform in a controlled and r
 **Focus:**
 How the platform is observed and operated during runtime.
 
+<img width="587" height="897" alt="image" src="https://github.com/user-attachments/assets/75b4aeaa-4e3a-4e01-b5ab-1fb1babc546e" />
+
 **Key topics:**
 
 * Metrics collection with Prometheus
