@@ -17,6 +17,8 @@ The stack will allow you to monitor **cluster metrics, application metrics, and 
 
 <img width="919" height="604" alt="image" src="https://github.com/user-attachments/assets/d44c95cb-23d4-4636-8575-3bb3f5db220c" />
 
+<img width="587" height="897" alt="image" src="https://github.com/user-attachments/assets/f0118ff0-6565-46b1-afef-95186b94ca65" />
+
 ---
 
 # Prerequisites
