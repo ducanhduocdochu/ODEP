@@ -65,6 +65,8 @@ How the platform is deployed, isolated, and operated at the infrastructure level
 * Platform services & data layer separation
 * Reliability & observability overlay
 
+** New Update: **
+* Use argo to sync platform: https://github.com/ducanhduocdochu/platform-devops-ecommerce
 ---
 
 ## 📗 Part 2 – Core E-commerce Microservices Architecture
